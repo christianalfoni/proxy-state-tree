@@ -1,0 +1,8 @@
+src
+node_modules
+.babelrc
+.eslintrc.json
+.gitignore
+.npmignore
+.travis.yml
+package-lock.json

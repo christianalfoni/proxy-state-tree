@@ -1,4 +1,4 @@
-const proxify = require("./proxify");
+import proxify from "./proxify";
 
 class ProxyStateTree {
   constructor(state) {
@@ -49,4 +49,4 @@ class ProxyStateTree {
   }
 }
 
-module.exports = ProxyStateTree;
+export default ProxyStateTree;

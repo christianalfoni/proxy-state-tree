@@ -1,4 +1,4 @@
-const ProxyStateTree = require("./");
+import ProxyStateTree from "./";
 
 describe("CREATION", () => {
   test("should create a ProxyStateTree instance", () => {

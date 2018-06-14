@@ -48,6 +48,8 @@ function proxifyObject(proxyStateTree, obj, path, paths, mutations) {
       });
 
       delete target[prop];
+
+      return true;
     }
   });
 }
@@ -104,4 +106,4 @@ function proxify(proxyStateTree, value, path) {
   return value;
 }
 
-module.exports = proxify;
+export default proxify;
