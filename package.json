@@ -1,14 +1,14 @@
 {
   "name": "proxy-state-tree",
-  "version": "1.0.0",
+  "version": "1.0.0-alpha1",
   "description": "An implementation of the Mobx/Vue state tracking approach, for library authors",
-  "main": "dist/proxystatetree.cjs.js",
-  "jsnext:main": "dist/proxystatetree.es.js",
-  "module": "dist/proxystatetree.es.js",
+  "main": "dist/proxy-state-tree.cjs.js",
+  "jsnext:main": "dist/proxy-state-tree.es.js",
+  "module": "dist/proxy-state-tree.es.js",
   "scripts": {
     "prepublish": "npm run build",
     "build": "npm run build:cjs && npm run build:es",
-    "build:cjs": "rollup src/index.js --file dist/proxy-statet-ree.cjs.js --format cjs",
+    "build:cjs": "rollup src/index.js --file dist/proxy-state-tree.cjs.js --format cjs",
     "build:es": "rollup src/index.js --file dist/proxy-state-tree.es.js --format es",
     "test": "jest"
   },
