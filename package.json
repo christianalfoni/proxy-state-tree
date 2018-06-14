@@ -6,6 +6,7 @@
   "jsnext:main": "dist/proxystatetree.es.js",
   "module": "dist/proxystatetree.es.js",
   "scripts": {
+    "prepublish": "npm run build",
     "build": "npm run build:cjs && npm run build:es",
     "build:cjs": "rollup src/index.js --file dist/proxy-statet-ree.cjs.js --format cjs",
     "build:es": "rollup src/index.js --file dist/proxy-state-tree.es.js --format es",
