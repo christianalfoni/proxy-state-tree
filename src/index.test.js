@@ -57,6 +57,15 @@ describe("OBJECTS", () => {
     });
   });
   describe("MUTATIONS", () => {
+    test("should throw when mutating without tracking", () => {
+      const state = {
+        foo: "bar"
+      };
+      const tree = new ProxyStateTree(state);
+      expect(() => {
+        tree.get().foo = "bar2";
+      }).toThrow();
+    });
     test("should track SET mutations", () => {
       const state = {
         foo: "bar"
@@ -123,6 +132,15 @@ describe("ARRAYS", () => {
     });
   });
   describe("MUTATIONS", () => {
+    test("should throw when mutating without tracking", () => {
+      const state = {
+        foo: []
+      };
+      const tree = new ProxyStateTree(state);
+      expect(() => {
+        tree.get().foo.push("foo");
+      }).toThrow();
+    });
     test("should track PUSH mutations", () => {
       const state = {
         foo: []
@@ -178,7 +196,65 @@ describe("ARRAYS", () => {
 
       expect(tree.get().foo.length).toBe(0);
     });
+    test("should track UNSHIFT mutations", () => {
+      const state = {
+        foo: []
+      };
+      const tree = new ProxyStateTree(state);
+      const mutations = tree.trackMutations(() => {
+        tree.get().foo.unshift("foo");
+      });
+      expect(mutations).toMatchObject([
+        {
+          method: "unshift",
+          path: ["foo"],
+          args: ["foo"]
+        }
+      ]);
+
+      expect(tree.get().foo[0]).toBe("foo");
+    });
+    test("should track SPLICE mutations", () => {
+      const state = {
+        foo: ["foo"]
+      };
+      const tree = new ProxyStateTree(state);
+      const mutations = tree.trackMutations(() => {
+        tree.get().foo.splice(0, 1, "bar");
+      });
+      expect(mutations).toMatchObject([
+        {
+          method: "splice",
+          path: ["foo"],
+          args: [0, 1, "bar"]
+        }
+      ]);
+
+      expect(tree.get().foo[0]).toBe("bar");
+    });
   });
 });
 
-describe("FUNCTIONS", () => {});
+describe("FUNCTIONS", () => {
+  test("should call functions in the tree when accessed", () => {
+    const state = {
+      foo: () => "bar"
+    };
+    const tree = new ProxyStateTree(state);
+
+    expect(tree.get().foo).toBe("bar");
+  });
+  test("should pass proxy-state-tree instance and path", () => {
+    const state = {
+      foo: (proxyStateTree, path) => {
+        expect(proxyStateTree).toBe(tree);
+        expect(path).toMatchObject(["foo"]);
+
+        return "bar";
+      }
+    };
+    const tree = new ProxyStateTree(state);
+
+    expect(tree.get().foo).toBe("bar");
+  });
+});

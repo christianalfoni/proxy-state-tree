@@ -25,6 +25,13 @@ function proxifyObject(proxyStateTree, obj, path, paths, mutations) {
       return target[prop];
     },
     set(target, prop, value) {
+      if (!proxyStateTree.isTrackingMutations) {
+        throw new Error(
+          `proxy-state-tree - You are mutating the path "${path
+            .concat(prop)
+            .join(".")}", but it is not allowed`
+        );
+      }
       proxyStateTree.mutations.push({
         method: "set",
         path: path.concat(prop),
@@ -45,6 +52,8 @@ function proxifyObject(proxyStateTree, obj, path, paths, mutations) {
   });
 }
 
+const arrayMutations = ["push", "shift", "pop", "unshift", "splice"];
+
 function proxifyArray(proxyStateTree, array, path) {
   return new Proxy(array, {
     get(target, prop) {
@@ -59,7 +68,14 @@ function proxifyArray(proxyStateTree, array, path) {
         proxyStateTree.paths.push(nestedPath);
       }
 
-      if (typeof target[prop] === "function") {
+      if (arrayMutations.indexOf(prop) >= 0) {
+        if (!proxyStateTree.isTrackingMutations) {
+          throw new Error(
+            `proxy-state-tree - You are mutating the path "${path
+              .concat(prop)
+              .join(".")}", but it is not allowed`
+          );
+        }
         return (...args) => {
           proxyStateTree.mutations.push({
             method: prop,
