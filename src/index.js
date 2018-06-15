@@ -13,10 +13,15 @@ class ProxyStateTree {
 	get() {
 		return this.proxy;
 	}
-	trackMutations(cb) {
+	startMutationTracking() {
+		const currentMutations = this.mutations.slice();
+
 		this.isTrackingMutations = true;
 		this.mutations.length = 0;
-		cb();
+
+		return currentMutations;
+	}
+	stopMutationTracking() {
 		for (let callback in this.mutationCallbacks) {
 			this.mutationCallbacks[callback](this.mutations);
 		}
@@ -29,13 +34,20 @@ class ProxyStateTree {
 			}
 		}
 		this.isTrackingMutations = false;
+
 		return this.mutations;
 	}
-	trackPaths(cb) {
+	startPathsTracking() {
+		const currentPaths = this.paths.slice();
+
 		this.isTrackingPaths = true;
 		this.paths.length = 0;
-		cb();
+
+		return currentPaths;
+	}
+	stopPathsTracking() {
 		this.isTrackingPaths = false;
+
 		return this.paths;
 	}
 	addMutationListener(initialPaths, cb) {

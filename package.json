@@ -1,48 +1,42 @@
 {
-  "name": "proxy-state-tree",
-  "version": "1.0.0-alpha1",
-  "description": "An implementation of the Mobx/Vue state tracking approach, for library authors",
-  "main": "dist/proxy-state-tree.cjs.js",
-  "jsnext:main": "dist/proxy-state-tree.es.js",
-  "module": "dist/proxy-state-tree.es.js",
-  "scripts": {
-    "prepublish": "npm run build",
-    "build": "npm run build:cjs && npm run build:es",
-    "build:cjs": "rollup src/index.js --file dist/proxy-state-tree.cjs.js --format cjs",
-    "build:es": "rollup src/index.js --file dist/proxy-state-tree.es.js --format es",
-    "test": "jest"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/christianalfoni/proxy-state-tree.git"
-  },
-  "keywords": [
-    "state",
-    "proxy",
-    "mobx",
-    "vue",
-    "store"
-  ],
-  "author": "Christian Alfoni",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/christianalfoni/proxy-state-tree/issues"
-  },
-  "homepage": "https://github.com/christianalfoni/proxy-state-tree#readme",
-  "devDependencies": {
-    "babel-core": "^6.26.3",
-    "babel-jest": "^23.0.1",
-    "babel-preset-es2015": "^6.24.1",
-    "eslint": "^4.19.1",
-    "eslint-config-prettier": "^2.9.0",
-    "eslint-config-standard": "^11.0.0",
-    "eslint-plugin-import": "^2.2.0",
-    "eslint-plugin-node": "^6.0.1",
-    "eslint-plugin-prettier": "^2.6.0",
-    "eslint-plugin-promise": "^3.5.0",
-    "eslint-plugin-standard": "^3.0.1",
-    "jest": "^23.1.0",
-    "prettier": "^1.13.5",
-    "rollup": "^0.60.7"
-  }
+	"name": "proxy-state-tree",
+	"version": "1.0.0-alpha3",
+	"description": "An implementation of the Mobx/Vue state tracking approach, for library authors",
+	"main": "dist/proxy-state-tree.cjs.js",
+	"jsnext:main": "dist/proxy-state-tree.es.js",
+	"module": "dist/proxy-state-tree.es.js",
+	"scripts": {
+		"prepublish": "npm run build",
+		"build": "npm run build:cjs && npm run build:es",
+		"build:cjs": "rollup src/index.js --file dist/proxy-state-tree.cjs.js --format cjs",
+		"build:es": "rollup src/index.js --file dist/proxy-state-tree.es.js --format es",
+		"test": "jest"
+	},
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/christianalfoni/proxy-state-tree.git"
+	},
+	"keywords": [ "state", "proxy", "mobx", "vue", "store" ],
+	"author": "Christian Alfoni",
+	"license": "MIT",
+	"bugs": {
+		"url": "https://github.com/christianalfoni/proxy-state-tree/issues"
+	},
+	"homepage": "https://github.com/christianalfoni/proxy-state-tree#readme",
+	"devDependencies": {
+		"babel-core": "^6.26.3",
+		"babel-jest": "^23.0.1",
+		"babel-preset-es2015": "^6.24.1",
+		"eslint": "^4.19.1",
+		"eslint-config-prettier": "^2.9.0",
+		"eslint-config-standard": "^11.0.0",
+		"eslint-plugin-import": "^2.2.0",
+		"eslint-plugin-node": "^6.0.1",
+		"eslint-plugin-prettier": "^2.6.0",
+		"eslint-plugin-promise": "^3.5.0",
+		"eslint-plugin-standard": "^3.0.1",
+		"jest": "^23.1.0",
+		"prettier": "^1.13.5",
+		"rollup": "^0.60.7"
+	}
 }

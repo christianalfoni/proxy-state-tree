@@ -50,9 +50,9 @@ describe('OBJECTS', () => {
 				}
 			};
 			const tree = new ProxyStateTree(state);
-			const paths = tree.trackPaths(() => {
-				expect(tree.get().foo.bar).toBe('baz');
-			});
+			tree.startPathsTracking();
+			expect(tree.get().foo.bar).toBe('baz');
+			const paths = tree.stopPathsTracking();
 			expect(paths).toEqual([ [ 'foo' ], [ 'foo', 'bar' ] ]);
 		});
 	});
@@ -71,9 +71,9 @@ describe('OBJECTS', () => {
 				foo: 'bar'
 			};
 			const tree = new ProxyStateTree(state);
-			const mutations = tree.trackMutations(() => {
-				tree.get().foo = 'bar2';
-			});
+			tree.startMutationTracking();
+			tree.get().foo = 'bar2';
+			const mutations = tree.stopMutationTracking();
 			expect(mutations).toEqual([
 				{
 					method: 'set',
@@ -88,9 +88,9 @@ describe('OBJECTS', () => {
 				foo: 'bar'
 			};
 			const tree = new ProxyStateTree(state);
-			const mutations = tree.trackMutations(() => {
-				delete tree.get().foo;
-			});
+			tree.startMutationTracking();
+			delete tree.get().foo;
+			const mutations = tree.stopMutationTracking();
 			expect(mutations).toEqual([
 				{
 					method: 'unset',
@@ -125,9 +125,9 @@ describe('ARRAYS', () => {
 				foo: [ 'bar' ]
 			};
 			const tree = new ProxyStateTree(state);
-			const paths = tree.trackPaths(() => {
-				expect(tree.get().foo[0]).toBe('bar');
-			});
+			tree.startPathsTracking();
+			expect(tree.get().foo[0]).toBe('bar');
+			const paths = tree.stopPathsTracking();
 			expect(paths).toEqual([ [ 'foo' ], [ 'foo', '0' ] ]);
 		});
 	});
@@ -146,9 +146,9 @@ describe('ARRAYS', () => {
 				foo: []
 			};
 			const tree = new ProxyStateTree(state);
-			const mutations = tree.trackMutations(() => {
-				tree.get().foo.push('bar');
-			});
+			tree.startMutationTracking();
+			tree.get().foo.push('bar');
+			const mutations = tree.stopMutationTracking();
 			expect(mutations).toEqual([
 				{
 					method: 'push',
@@ -165,9 +165,9 @@ describe('ARRAYS', () => {
 				foo: [ 'foo' ]
 			};
 			const tree = new ProxyStateTree(state);
-			const mutations = tree.trackMutations(() => {
-				tree.get().foo.pop();
-			});
+			tree.startMutationTracking();
+			tree.get().foo.pop();
+			const mutations = tree.stopMutationTracking();
 			expect(mutations).toEqual([
 				{
 					method: 'pop',
@@ -183,9 +183,9 @@ describe('ARRAYS', () => {
 				foo: [ 'foo' ]
 			};
 			const tree = new ProxyStateTree(state);
-			const mutations = tree.trackMutations(() => {
-				tree.get().foo.shift();
-			});
+			tree.startMutationTracking();
+			tree.get().foo.shift();
+			const mutations = tree.stopMutationTracking();
 			expect(mutations).toEqual([
 				{
 					method: 'shift',
@@ -201,9 +201,9 @@ describe('ARRAYS', () => {
 				foo: []
 			};
 			const tree = new ProxyStateTree(state);
-			const mutations = tree.trackMutations(() => {
-				tree.get().foo.unshift('foo');
-			});
+			tree.startMutationTracking();
+			tree.get().foo.unshift('foo');
+			const mutations = tree.stopMutationTracking();
 			expect(mutations).toEqual([
 				{
 					method: 'unshift',
@@ -219,9 +219,9 @@ describe('ARRAYS', () => {
 				foo: [ 'foo' ]
 			};
 			const tree = new ProxyStateTree(state);
-			const mutations = tree.trackMutations(() => {
-				tree.get().foo.splice(0, 1, 'bar');
-			});
+			tree.startMutationTracking();
+			tree.get().foo.splice(0, 1, 'bar');
+			const mutations = tree.stopMutationTracking();
 			expect(mutations).toEqual([
 				{
 					method: 'splice',
@@ -266,15 +266,15 @@ describe('REACTIONS', () => {
 			foo: 'bar'
 		});
 		const state = tree.get();
-		const paths = tree.trackPaths(() => {
-			state.foo;
-		});
+		tree.startPathsTracking();
+		state.foo;
+		const paths = tree.stopPathsTracking();
 		tree.addMutationListener(paths, () => {
 			reactionCount++;
 		});
-		tree.trackMutations(() => {
-			state.foo = 'bar2';
-		});
+		tree.startMutationTracking();
+		state.foo = 'bar2';
+		tree.stopMutationTracking();
 		expect(reactionCount).toBe(1);
 	});
 	test('should be able to update listener using paths', () => {
@@ -284,19 +284,19 @@ describe('REACTIONS', () => {
 		});
 		const state = tree.get();
 		function render() {
-			return tree.trackPaths(() => {
-				if (state.foo === 'bar') {
-				} else {
-					state.bar;
-				}
-			});
+			tree.startPathsTracking();
+			if (state.foo === 'bar') {
+			} else {
+				state.bar;
+			}
+			return tree.stopPathsTracking();
 		}
 		const listener = tree.addMutationListener(render(), () => {
 			listener.update(render());
 		});
-		tree.trackMutations(() => {
-			state.foo = 'bar2';
-		});
+		tree.startMutationTracking();
+		state.foo = 'bar2';
+		tree.stopMutationTracking();
 		expect(tree.pathDependencies.foo.length).toBe(1);
 		expect(tree.pathDependencies.bar.length).toBe(1);
 	});
@@ -307,19 +307,19 @@ describe('REACTIONS', () => {
 		});
 		const state = tree.get();
 		function render() {
-			return tree.trackPaths(() => {
-				if (state.foo === 'bar') {
-				} else {
-					state.bar;
-				}
-			});
+			tree.startPathsTracking();
+			if (state.foo === 'bar') {
+			} else {
+				state.bar;
+			}
+			return tree.stopPathsTracking();
 		}
 		const listener = tree.addMutationListener(render(), () => {
 			listener.dispose();
 		});
-		tree.trackMutations(() => {
-			state.foo = 'bar2';
-		});
+		tree.startMutationTracking();
+		state.foo = 'bar2';
+		tree.stopMutationTracking();
 		expect(tree.pathDependencies).toEqual({});
 	});
 });
