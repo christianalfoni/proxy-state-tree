@@ -123,13 +123,24 @@ const tree = new ProxyStateTree({
   bar: 'baz'
 })
 const state = tree.get()
-const paths = tree.trackPaths(() => {
-  const foo = state.foo
-  const bar = state.bar
-})
 
-tree.onMutation((mutations) => {
-  const hasMutated = tree.hasMutation(paths, mutations)
+function render () {
+  return tree.trackPaths(() => {
+    const foo = state.foo
+    const bar = state.bar
+  })
+}
+
+const listener = tree.addMutationListener(render(), (mutations) => {
+  // Runs when mutations matches paths passed in
+
+  // Update listener with new paths. Typically you track
+  // a new set of paths on mutation change, to pick up changes
+  // to the paths. If statements etc. causes this
+  listener.update(render()) 
+
+  // Remove listener
+  listener.dispose()
 })
 
 tree.trackMutations(() => {
