@@ -6,12 +6,11 @@ An implementation of the Mobx/Vue state tracking approach, for library authors
 `npm install proxy-state-tree@alpha`
 
 ## Why
-There are two main approaches to change detection. **immutability** and **setter/getter interception**. Immutability is easy to implement as a library author cause it is really all about comparing values. It is less work for you as a library author, but more work for the developers using the tool. The **setter/getter** approach, popularized by projects like [vuejs](https://vuejs.org/), [mobx](https://github.com/mobxjs/mobx), [mobx-state-tree](https://github.com/mobxjs/mobx-state-tree) and , was traditionally more work for you as a library author, but far less work for the developers consuming your tool. The **setter/getter** approach also has two other prominent benefits:
+The **proxy-state-tree** project is created to stimulate innovation in state management. The introduction of [Flux](https://facebook.github.io/flux/) was followed by a big wave of libraries trying to improve on the idea. All these iterations helped moving the community forward and [Redux](https://redux.js.org/) was born a year later. It was frustrating to have all these variations of the same idea, but at the same time it made the core idea better. One factor I believe made this possible is that Flux state management is based on **immutability**. It is a difficult concept to understand, but when you understand it, it is easy to implement the concept of **change**. You literally just check if a value you depend on has changed. That said, immutability tends to put a lof effort on the hands of the consumer. You have to think really hard about how you structure state and expose state to components to avoid performance issues and prevent boilerplate.
 
-- You mutate your state as normal. No special immutable API or writing your changes in an immutable way
-- Rerendering and recalculation is optimized out of the box as you track exactly the state that is being used
+[vuejs](https://vuejs.org/) and [mobx](https://github.com/mobxjs/mobx) has a different approach to **change**. They use **getter/setter interception** to track access to state and changes to state. This concept completely removes the consumers burden of how the state is structured and how it is exposed to the different parts of the app. You just expose state in any form and the usage is automatically tracked and optimized. The problem with this approach though is that it is difficult to implement as a library author. **I want to change that!**
 
-**proxy-state-tree** allows you to expose a single state tree to your library and track its usage and changes.
+**proxy-state-tree** is a low level implementation of the **getter/setter interception** with a **single state tree** to help library authors innovate. I hope to see innovations that removes the burden that immutability currently causes, but keeps the guarantees that was introduced in **Flux**. I invite you to make a mobx and redux baby! ;-)
 
 ## Example
 
