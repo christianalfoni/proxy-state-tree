@@ -1,4 +1,4 @@
-import proxify from './proxify';
+import proxify, { IS_PROXY } from './proxify';
 
 class ProxyStateTree {
 	constructor(state) {
@@ -52,24 +52,27 @@ class ProxyStateTree {
 	}
 	addMutationListener(initialPaths, cb) {
 		const pathDependencies = this.pathDependencies;
-		let currentStringPaths = initialPaths.map((path) => path.join('.'));
+		let currentStringPaths = initialPaths.map(path => path.join('.'));
 
 		for (let index in currentStringPaths) {
 			const currentStringPath = currentStringPaths[index];
 			pathDependencies[currentStringPath] = pathDependencies[currentStringPath]
 				? pathDependencies[currentStringPath].concat(cb)
-				: [ cb ];
+				: [cb];
 		}
 
 		return {
 			update(newPaths) {
-				const newStringPaths = newPaths.map((path) => path.join('.'));
+				const newStringPaths = newPaths.map(path => path.join('.'));
 
 				for (let index in currentStringPaths) {
 					const currentStringPath = currentStringPaths[index];
 
 					if (newStringPaths.indexOf(currentStringPath) === -1) {
-						pathDependencies[currentStringPath].splice(pathDependencies[currentStringPath].indexOf(cb), 1);
+						pathDependencies[currentStringPath].splice(
+							pathDependencies[currentStringPath].indexOf(cb),
+							1
+						);
 					}
 				}
 
@@ -79,7 +82,7 @@ class ProxyStateTree {
 					if (currentStringPaths.indexOf(newStringPath) === -1) {
 						pathDependencies[newStringPath] = pathDependencies[newStringPath]
 							? pathDependencies[newStringPath].concat(cb)
-							: [ cb ];
+							: [cb];
 					}
 				}
 
@@ -89,7 +92,10 @@ class ProxyStateTree {
 				for (let index in currentStringPaths) {
 					const currentStringPath = currentStringPaths[index];
 
-					pathDependencies[currentStringPath].splice(pathDependencies[currentStringPath].indexOf(cb), 1);
+					pathDependencies[currentStringPath].splice(
+						pathDependencies[currentStringPath].indexOf(cb),
+						1
+					);
 
 					if (!pathDependencies[currentStringPath].length) {
 						delete pathDependencies[currentStringPath];
@@ -100,4 +106,5 @@ class ProxyStateTree {
 	}
 }
 
+export { IS_PROXY };
 export default ProxyStateTree;

@@ -1,4 +1,4 @@
-import ProxyStateTree from './';
+import ProxyStateTree, { IS_PROXY } from './';
 
 describe('CREATION', () => {
 	test('should create a ProxyStateTree instance', () => {
@@ -11,7 +11,7 @@ describe('CREATION', () => {
 		const state = {};
 		const tree = new ProxyStateTree(state);
 
-		expect(tree.get().__is_proxy).toBeTruthy();
+		expect(tree.get()[IS_PROXY]).toBeTruthy();
 	});
 
 	test('should not create nested proxies when initialized', () => {
@@ -20,7 +20,7 @@ describe('CREATION', () => {
 		};
 		new ProxyStateTree(state); // eslint-disable-line
 
-		expect(state.foo.__is_proxy).not.toBeTruthy();
+		expect(state.foo[IS_PROXY]).not.toBeTruthy();
 	});
 });
 
@@ -32,7 +32,7 @@ describe('OBJECTS', () => {
 			};
 			const tree = new ProxyStateTree(state);
 			tree.get().foo; // eslint-disable-line
-			expect(state.foo.__is_proxy).toBeTruthy();
+			expect(state.foo[IS_PROXY]).toBeTruthy();
 		});
 		test('should access properties', () => {
 			const state = {
@@ -53,7 +53,7 @@ describe('OBJECTS', () => {
 			tree.startPathsTracking();
 			expect(tree.get().foo.bar).toBe('baz');
 			const paths = tree.stopPathsTracking();
-			expect(paths).toEqual([ [ 'foo' ], [ 'foo', 'bar' ] ]);
+			expect(paths).toEqual([['foo'], ['foo', 'bar']]);
 		});
 	});
 	describe('MUTATIONS', () => {
@@ -77,8 +77,8 @@ describe('OBJECTS', () => {
 			expect(mutations).toEqual([
 				{
 					method: 'set',
-					path: [ 'foo' ],
-					args: [ 'bar2' ]
+					path: ['foo'],
+					args: ['bar2']
 				}
 			]);
 			expect(tree.get().foo).toBe('bar2');
@@ -94,7 +94,7 @@ describe('OBJECTS', () => {
 			expect(mutations).toEqual([
 				{
 					method: 'unset',
-					path: [ 'foo' ],
+					path: ['foo'],
 					args: []
 				}
 			]);
@@ -111,24 +111,24 @@ describe('ARRAYS', () => {
 			};
 			const tree = new ProxyStateTree(state);
 			tree.get().foo; // eslint-disable-line
-			expect(state.foo.__is_proxy).toBeTruthy();
+			expect(state.foo[IS_PROXY]).toBeTruthy();
 		});
 		test('should access properties', () => {
 			const state = {
-				foo: [ 'bar' ]
+				foo: ['bar']
 			};
 			const tree = new ProxyStateTree(state);
 			expect(tree.get().foo[0]).toBe('bar');
 		});
 		test('should track access properties', () => {
 			const state = {
-				foo: [ 'bar' ]
+				foo: ['bar']
 			};
 			const tree = new ProxyStateTree(state);
 			tree.startPathsTracking();
 			expect(tree.get().foo[0]).toBe('bar');
 			const paths = tree.stopPathsTracking();
-			expect(paths).toEqual([ [ 'foo' ], [ 'foo', '0' ] ]);
+			expect(paths).toEqual([['foo'], ['foo', '0']]);
 		});
 	});
 	describe('MUTATIONS', () => {
@@ -152,8 +152,8 @@ describe('ARRAYS', () => {
 			expect(mutations).toEqual([
 				{
 					method: 'push',
-					path: [ 'foo' ],
-					args: [ 'bar' ]
+					path: ['foo'],
+					args: ['bar']
 				}
 			]);
 
@@ -162,7 +162,7 @@ describe('ARRAYS', () => {
 		});
 		test('should track POP mutations', () => {
 			const state = {
-				foo: [ 'foo' ]
+				foo: ['foo']
 			};
 			const tree = new ProxyStateTree(state);
 			tree.startMutationTracking();
@@ -171,7 +171,7 @@ describe('ARRAYS', () => {
 			expect(mutations).toEqual([
 				{
 					method: 'pop',
-					path: [ 'foo' ],
+					path: ['foo'],
 					args: []
 				}
 			]);
@@ -180,7 +180,7 @@ describe('ARRAYS', () => {
 		});
 		test('should track POP mutations', () => {
 			const state = {
-				foo: [ 'foo' ]
+				foo: ['foo']
 			};
 			const tree = new ProxyStateTree(state);
 			tree.startMutationTracking();
@@ -189,7 +189,7 @@ describe('ARRAYS', () => {
 			expect(mutations).toEqual([
 				{
 					method: 'shift',
-					path: [ 'foo' ],
+					path: ['foo'],
 					args: []
 				}
 			]);
@@ -207,8 +207,8 @@ describe('ARRAYS', () => {
 			expect(mutations).toEqual([
 				{
 					method: 'unshift',
-					path: [ 'foo' ],
-					args: [ 'foo' ]
+					path: ['foo'],
+					args: ['foo']
 				}
 			]);
 
@@ -216,7 +216,7 @@ describe('ARRAYS', () => {
 		});
 		test('should track SPLICE mutations', () => {
 			const state = {
-				foo: [ 'foo' ]
+				foo: ['foo']
 			};
 			const tree = new ProxyStateTree(state);
 			tree.startMutationTracking();
@@ -225,8 +225,8 @@ describe('ARRAYS', () => {
 			expect(mutations).toEqual([
 				{
 					method: 'splice',
-					path: [ 'foo' ],
-					args: [ 0, 1, 'bar' ]
+					path: ['foo'],
+					args: [0, 1, 'bar']
 				}
 			]);
 
@@ -248,7 +248,7 @@ describe('FUNCTIONS', () => {
 		const state = {
 			foo: (proxyStateTree, path) => {
 				expect(proxyStateTree).toBe(tree);
-				expect(path).toEqual([ 'foo' ]);
+				expect(path).toEqual(['foo']);
 
 				return 'bar';
 			}
