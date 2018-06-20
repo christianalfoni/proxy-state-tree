@@ -10,13 +10,20 @@
 		"build": "npm run build:cjs && npm run build:es",
 		"build:cjs": "rollup src/index.js --file dist/proxy-state-tree.cjs.js --format cjs",
 		"build:es": "rollup src/index.js --file dist/proxy-state-tree.es.js --format es",
-		"test": "jest"
+		"test": "jest",
+		"test:perf": "node --expose-gc node_modules/jest/bin/jest.js --testRegex 'benchmarks/.*?js$'"
 	},
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/christianalfoni/proxy-state-tree.git"
 	},
-	"keywords": [ "state", "proxy", "mobx", "vue", "store" ],
+	"keywords": [
+		"state",
+		"proxy",
+		"mobx",
+		"vue",
+		"store"
+	],
 	"author": "Christian Alfoni",
 	"license": "MIT",
 	"bugs": {
@@ -36,7 +43,11 @@
 		"eslint-plugin-promise": "^3.5.0",
 		"eslint-plugin-standard": "^3.0.1",
 		"jest": "^23.1.0",
+		"lodash.clonedeep": "^4.5.0",
 		"prettier": "^1.13.5",
 		"rollup": "^0.60.7"
+	},
+	"dependencies": {
+		"is-plain-object": "^2.0.4"
 	}
 }
