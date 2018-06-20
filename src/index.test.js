@@ -359,4 +359,31 @@ describe('ITERATIONS', () => {
 		const paths = tree.stopPathsTracking();
 		expect(paths).toEqual([ 'items', 'items.foo', 'items.bar' ]);
 	});
+	test('should react to array mutation methods', () => {
+		let reactionCount = 0;
+		const tree = new ProxyStateTree({
+			items: [
+				{
+					title: 'foo'
+				},
+				{
+					title: 'bar'
+				}
+			]
+		});
+		const state = tree.get();
+		tree.startPathsTracking();
+		state.items.map((item) => item.title);
+		const paths = tree.stopPathsTracking();
+		expect(paths).toEqual([ 'items', 'items.0', 'items.0.title', 'items.1', 'items.1.title' ]);
+		tree.addMutationListener(paths, () => {
+			reactionCount++;
+		});
+		tree.startMutationTracking();
+		state.items.push({
+			title: 'mip'
+		});
+		tree.stopMutationTracking();
+		expect(reactionCount).toBe(1);
+	});
 });
