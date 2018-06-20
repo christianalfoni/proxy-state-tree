@@ -92,12 +92,14 @@ function createObjectProxy(tree, value, path) {
 }
 
 function proxify(tree, value, path) {
-  if (value[IS_PROXY]) {
-    return value;
-  } else if (Array.isArray(value)) {
-    return createArrayProxy(tree, value, path);
-  } else if (isPlainObject(value)) {
-    return createObjectProxy(tree, value, path);
+  if (value) {
+    if (value[IS_PROXY]) {
+      return value;
+    } else if (Array.isArray(value)) {
+      return createArrayProxy(tree, value, path);
+    } else if (isPlainObject(value)) {
+      return createObjectProxy(tree, value, path);
+    }
   }
   return value;
 }
