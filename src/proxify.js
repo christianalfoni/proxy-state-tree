@@ -1,49 +1,86 @@
-const isPlainObject = require("is-plain-object");
+import isPlainObject from "is-plain-object";
 
-const IS_PROXY = "__is_proxy";
+const IS_PROXY = Symbol("IS_PROXY");
 
-function proxifyObject(proxyStateTree, obj, path, paths, mutations) {
-  return new Proxy(obj, {
+function concat(path, prop) {
+  return path === undefined ? prop : path + "." + prop;
+}
+
+const arrayMutations = new Set(["push", "shift", "pop", "unshift", "splice"]);
+
+function createArrayProxy(tree, value, path) {
+  return new Proxy(value, {
     get(target, prop) {
-      if (prop === IS_PROXY) {
-        return true;
+      if (prop === IS_PROXY) return true;
+
+      const nestedPath = concat(path, prop);
+
+      if (tree.isTrackingPaths) {
+        tree.paths.add(nestedPath);
       }
 
-      const value = target[prop];
-      const nestedPath = path.concat(prop);
+      if (arrayMutations.has(prop)) {
+        if (!tree.isTrackingMutations) {
+          throw new Error(
+            `proxy-state-tree - You are mutating the path "${nestedPath}", but it is not allowed`
+          );
+        }
+        return (...args) => {
+          tree.mutations.push({
+            method: prop,
+            path: path,
+            args: args
+          });
 
-      if (proxyStateTree.isTrackingPaths) {
-        proxyStateTree.paths.push(nestedPath);
+          return target[prop](...args);
+        };
+      }
+
+      return (target[prop] = proxify(tree, target[prop], nestedPath));
+    }
+  });
+}
+
+function createObjectProxy(tree, value, path) {
+  return new Proxy(value, {
+    get(target, prop) {
+      if (prop === IS_PROXY) return true;
+
+      const value = target[prop];
+      const nestedPath = concat(path, prop);
+
+      if (tree.isTrackingPaths) {
+        tree.paths.add(nestedPath);
       }
 
       if (typeof value === "function") {
-        return value(proxyStateTree, nestedPath);
+        return value(tree, nestedPath);
       }
 
-      target[prop] = proxify(proxyStateTree, value, nestedPath);
-
-      return target[prop];
+      return (target[prop] = proxify(tree, value, nestedPath));
     },
     set(target, prop, value) {
-      if (!proxyStateTree.isTrackingMutations) {
+      const nestedPath = concat(path, prop);
+
+      if (!tree.isTrackingMutations) {
         throw new Error(
-          `proxy-state-tree - You are mutating the path "${path
-            .concat(prop)
-            .join(".")}", but it is not allowed`
+          `proxy-state-tree - You are mutating the path "${nestedPath}", but it is not allowed`
         );
       }
-      proxyStateTree.mutations.push({
+      tree.mutations.push({
         method: "set",
-        path: path.concat(prop),
+        path: nestedPath,
         args: [value]
       });
 
-      return Reflect.set(target, prop, value);
+      return (target[prop] = value);
     },
     deleteProperty(target, prop) {
-      proxyStateTree.mutations.push({
+      const nestedPath = concat(path, prop);
+
+      tree.mutations.push({
         method: "unset",
-        path: path.concat(prop),
+        path: nestedPath,
         args: []
       });
 
@@ -54,56 +91,16 @@ function proxifyObject(proxyStateTree, obj, path, paths, mutations) {
   });
 }
 
-const arrayMutations = ["push", "shift", "pop", "unshift", "splice"];
-
-function proxifyArray(proxyStateTree, array, path) {
-  return new Proxy(array, {
-    get(target, prop) {
-      if (prop === IS_PROXY) {
-        return true;
-      }
-
-      const value = target[prop];
-      const nestedPath = path.concat(prop);
-
-      if (proxyStateTree.isTrackingPaths) {
-        proxyStateTree.paths.push(nestedPath);
-      }
-
-      if (arrayMutations.indexOf(prop) >= 0) {
-        if (!proxyStateTree.isTrackingMutations) {
-          throw new Error(
-            `proxy-state-tree - You are mutating the path "${path
-              .concat(prop)
-              .join(".")}", but it is not allowed`
-          );
-        }
-        return (...args) => {
-          proxyStateTree.mutations.push({
-            method: prop,
-            path: path,
-            args: args
-          });
-
-          return target[prop](...args);
-        };
-      }
-
-      target[prop] = proxify(proxyStateTree, value, nestedPath);
-
-      return target[prop];
-    }
-  });
-}
-
-function proxify(proxyStateTree, value, path) {
-  if (Array.isArray(value)) {
-    return proxifyArray(proxyStateTree, value, path);
+function proxify(tree, value, path) {
+  if (value[IS_PROXY]) {
+    return value;
+  } else if (Array.isArray(value)) {
+    return createArrayProxy(tree, value, path);
   } else if (isPlainObject(value)) {
-    return proxifyObject(proxyStateTree, value, path);
+    return createObjectProxy(tree, value, path);
   }
-
   return value;
 }
 
+export { IS_PROXY };
 export default proxify;
