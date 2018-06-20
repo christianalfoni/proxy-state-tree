@@ -6,7 +6,7 @@ function concat(path, prop) {
 	return path === undefined ? prop : path + '.' + prop;
 }
 
-const arrayMutations = new Set([ 'push', 'shift', 'pop', 'unshift', 'splice' ]);
+const arrayMutations = new Set([ 'push', 'shift', 'pop', 'unshift', 'splice', 'reverse', 'sort' ]);
 
 function createArrayProxy(tree, value, path) {
 	return new Proxy(value, {
