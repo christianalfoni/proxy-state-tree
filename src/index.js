@@ -5,7 +5,7 @@ class ProxyStateTree {
     this.state = state;
     this.pathDependencies = {};
     this.mutations = [];
-    this.paths = new Set();
+    this.paths = [];
     this.isTrackingPaths = false;
     this.isTrackingMutations = false;
     this.proxy = proxify(this, state);
@@ -32,7 +32,7 @@ class ProxyStateTree {
     }
     pathCallbacksCalled.length = 0;
   }
-  startMutationTracking() {
+  setMutationTracking() {
     const currentMutations = this.mutations.slice();
 
     this.isTrackingMutations = true;
@@ -40,20 +40,31 @@ class ProxyStateTree {
 
     return currentMutations;
   }
-  stopMutationTracking() {
+  clearMutationTracking() {
     this.isTrackingMutations = false;
 
     return this.mutations;
   }
-  startPathsTracking() {
+  setPathsTracking() {
     this.isTrackingPaths = true;
-    const currentPaths = Array.from(this.paths);
-    this.paths.clear();
-    return currentPaths;
+
+    return this.paths.push(new Set()) - 1;
   }
-  stopPathsTracking() {
-    this.isTrackingPaths = false;
-    return Array.from(this.paths);
+  clearPathsTracking(index) {
+    if (index !== this.paths.length - 1) {
+      throw new Error(
+        "Nested path tracking requires you to stop the nested path tracker before the outer"
+      );
+    }
+    const pathSet = this.paths[index];
+    const paths = Array.from(pathSet);
+    this.paths.pop();
+
+    if (!this.paths.length) {
+      this.isTrackingPaths = false;
+    }
+
+    return paths;
   }
   addMutationListener(initialPaths, cb) {
     const pathDependencies = this.pathDependencies;

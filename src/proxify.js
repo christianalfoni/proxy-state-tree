@@ -31,7 +31,7 @@ function createArrayProxy(tree, value, path) {
       const nestedPath = concat(path, prop);
 
       if (tree.isTrackingPaths) {
-        tree.paths.add(nestedPath);
+        tree.paths[tree.paths.length - 1].add(nestedPath);
       }
 
       if (arrayMutations.has(prop)) {
@@ -65,7 +65,7 @@ function createObjectProxy(tree, value, path) {
       const nestedPath = concat(path, prop);
 
       if (tree.isTrackingPaths) {
-        tree.paths.add(nestedPath);
+        tree.paths[tree.paths.length - 1].add(nestedPath);
       }
 
       if (typeof value === "function") {
