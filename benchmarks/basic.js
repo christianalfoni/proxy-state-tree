@@ -26,14 +26,16 @@ describe("very basic performance test", () => {
 
   {
     const tree = new ProxyStateTree(deepClone(baseState));
-    const state = tree.get();
+    const tracker = tree.newTracker();
+    const state = tracker.get();
     measure("tracking access to property (proxy)", () => {
+      tracker.startPathsTracking();
       let counter = 0;
-      tree.startPathsTracking();
       for (let i = 0; i < MAX; i++) {
         counter += state[i % state.length];
       }
-      tree.stopPathsTracking();
+      tracker.stopPathsTracking();
+
       expect(counter).toBe(
         (((state.length - 1) * state.length) / 2) * (MAX / state.length)
       );

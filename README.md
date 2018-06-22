@@ -23,14 +23,14 @@ import ProxyStateTree from 'proxy-state-tree'
 
 const tree = new ProxyStateTree({})
 
-console.log(tree.get()) // {}
+console.log(tree.newTracker().get()) // {}
 ```
 
-As a library author you would typically expose a mechanism to define the initial state of the application, which you would pass to the **ProxyStateTree**. You would also expose a way to access the state, hiding the `tree.get()` from the consumer of your library.
+As a library author you would typically expose a mechanism to define the initial state of the application, which you would pass to the **ProxyStateTree**. You would also expose a way to access the state, hiding the `tree.newTracker().get()` from the consumer of your library.
 
 ## Track access
 
-You can track access to the state by using the **startPathsTracking** and **stopPathsTracking** methods.
+You can track access to the state by creating a new tracker using `tree.newTracker()` and by invoking **startPathsTracking** and **stopPathsTracking** methods.
 
 ```js
 import ProxyStateTree from 'proxy-state-tree'
@@ -39,14 +39,15 @@ const tree = new ProxyStateTree({
   foo: 'bar',
   bar: 'baz'
 })
-const state = tree.get()
+const tracker = tree.newTracker();
+const state = tracker.get()
 
-tree.startPathsTracking()
+tracker.startPathsTracking()
 const foo = state.foo
 const bar = state.bar
-const paths = tree.stopPathsTracking()
+const paths = tracker.stopPathsTracking()
 
-console.log(paths) // [['foo'], ['bar']]
+console.log(paths) // ['foo', 'bar']
 ```
 
 You would typically use this mechanism to track usage of state. For example rendering a component, calculating a a computed value etc. The returned paths array is stored for later usage. The paths structure is used internally by proxy-state-tree, but you can also consume it as a library author to for example showing components and what paths they depend on in a devtool.
@@ -56,26 +57,31 @@ You would typically use this mechanism to track usage of state. For example rend
 ```js
 import ProxyStateTree from 'proxy-state-tree'
 
-const tree = new ProxyStateTree({
-  foo: 'bar',
-  bar: []
-})
-const state = tree.get()
+const tree = new ProxyStateTree(
+  {
+    foo: 'bar',
+    bar: []
+  },
+  true // DevMode, track all mutations
+)
 
-tree.startMutationTracking()
+const tracker = tree.newTracker()
+const state = tracker.get()
+
+tracker.startMutationTracking()
 state.foo = 'bar2'
 state.bar.push('baz')
-const mutations = tree.stopMutationTracking()
+const mutations = tracker.stopMutationTracking()
 
 console.log(mutations)
 /*
   [{
     method: 'set',
-    path: ['foo'],
+    path: 'foo',
     args: ['bar2']  
   }, {
     method: 'push',
-    path: ['bar'],
+    path: 'bar',
     args: ['baz']
   }]
 */
@@ -92,32 +98,28 @@ const tree = new ProxyStateTree({
   foo: 'bar',
   bar: 'baz'
 })
-const state = tree.get()
+
+const tracker = tree.newTracker()
+const state = tracker.get()
 
 function render () {
-  tree.startPathsTracking()
+  tracker.startPathsTracking()
   const foo = state.foo
   const bar = state.bar
-
-  return tree.stopPathsTracking()
+  tracker.stopPathsTracking()
 }
 
-const listener = tree.addMutationListener(render(), () => {
-  // Runs when mutations matches paths passed in
+render();
 
-  // Whenever mutations affecting these paths occurs
-  // we typically create the paths again due to possible
-  // conditional logic, in "render" in this example
-  listener.update(render()) 
-
+const listener = tree.addMutationListener(() => {
   // Remove listener
   listener.dispose()
 })
 
-tree.startMutationTracking()
+tracker.startMutationTracking()
 state.foo = 'bar2'
 state.bar.push('baz')
-tree.stopMutationTracking()
+tracker.stopMutationTracking()
 ```
 
 Here we combine the tracked paths with the mutations performed to see if this components, computed or whatever indeed needs to run again, doing a new **startPathsTracking** and **stopPathsTracking**.
@@ -130,7 +132,7 @@ If you insert a function into the state tree it will be called when accessed. Th
 import ProxyStateTree from 'proxy-state-tree'
 
 const tree = new ProxyStateTree({
-  foo: (proxyStateTree, path) => {}
+  foo: (proxyTracker, path) => {}
 })
 ```
 

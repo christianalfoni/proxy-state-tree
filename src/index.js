@@ -1,105 +1,75 @@
 import proxify, { IS_PROXY } from "./proxify";
 
-class ProxyStateTree {
-  constructor(state) {
-    this.state = state;
-    this.pathDependencies = {};
-    this.mutations = [];
+class TrackingProxy {
+  constructor(value, devMode = false) {
+    this.devMode = devMode;
+
+    this.cache = new WeakMap();
+
     this.paths = new Set();
-    this.isTrackingPaths = false;
+    this.listeners = new Set();
+    this.mutated = false;
+
+    this.mutations = [];
+
     this.isTrackingMutations = false;
-    this.proxy = proxify(this, state);
+    this.isTrackingPaths = false;
+
+    this.proxy = proxify(this, value);
   }
+
   get() {
     return this.proxy;
   }
-  startMutationTracking() {
-    const currentMutations = this.mutations.slice();
 
-    this.isTrackingMutations = true;
-    this.mutations.length = 0;
-
-    return currentMutations;
-  }
-  stopMutationTracking() {
-    for (let callback in this.mutationCallbacks) {
-      this.mutationCallbacks[callback](this.mutations);
-    }
-    for (let mutation in this.mutations) {
-      const path = this.mutations[mutation].path;
-      if (this.pathDependencies[path]) {
-        for (let pathCallback in this.pathDependencies[path]) {
-          this.pathDependencies[path][pathCallback]();
-        }
-      }
-    }
-    this.isTrackingMutations = false;
-
-    return this.mutations;
-  }
   startPathsTracking() {
     this.isTrackingPaths = true;
-    const currentPaths = Array.from(this.paths);
-    this.paths.clear();
-    return currentPaths;
   }
+
   stopPathsTracking() {
     this.isTrackingPaths = false;
     return Array.from(this.paths);
   }
-  addMutationListener(initialPaths, cb) {
-    const pathDependencies = this.pathDependencies;
-    let currentStringPaths = initialPaths;
 
-    for (let index in currentStringPaths) {
-      const currentStringPath = currentStringPaths[index];
-      pathDependencies[currentStringPath] = pathDependencies[currentStringPath]
-        ? pathDependencies[currentStringPath].concat(cb)
-        : [cb];
+  clearPaths() {
+    this.paths.clear();
+  }
+
+  startMutationTracking() {
+    this.isTrackingMutations = true;
+    this.mutated = false;
+    this.mutations.length = 0;
+  }
+
+  stopMutationTracking() {
+    this.isTrackingMutations = false;
+    if (this.mutated) {
+      this.listeners.forEach(cb => cb());
     }
+    return this.mutations && this.mutations.slice();
+  }
+
+  addMutationListener(cb) {
+    this.listeners.add(cb);
+
+    const dispose = () => {
+      this.listeners.delete(cb);
+    };
 
     return {
-      update(newPaths) {
-        const newStringPaths = newPaths;
-
-        for (let index in currentStringPaths) {
-          const currentStringPath = currentStringPaths[index];
-
-          if (newStringPaths.indexOf(currentStringPath) === -1) {
-            pathDependencies[currentStringPath].splice(
-              pathDependencies[currentStringPath].indexOf(cb),
-              1
-            );
-          }
-        }
-
-        for (let index in newStringPaths) {
-          const newStringPath = newStringPaths[index];
-
-          if (currentStringPaths.indexOf(newStringPath) === -1) {
-            pathDependencies[newStringPath] = pathDependencies[newStringPath]
-              ? pathDependencies[newStringPath].concat(cb)
-              : [cb];
-          }
-        }
-
-        currentStringPaths = newStringPaths;
-      },
-      dispose() {
-        for (let index in currentStringPaths) {
-          const currentStringPath = currentStringPaths[index];
-
-          pathDependencies[currentStringPath].splice(
-            pathDependencies[currentStringPath].indexOf(cb),
-            1
-          );
-
-          if (!pathDependencies[currentStringPath].length) {
-            delete pathDependencies[currentStringPath];
-          }
-        }
-      }
+      dispose
     };
+  }
+}
+
+class ProxyStateTree {
+  constructor(state, devMode) {
+    this.state = state;
+    this.devMode = devMode;
+  }
+
+  newTracker() {
+    return new TrackingProxy(this.state, this.devMode);
   }
 }
 

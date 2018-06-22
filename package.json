@@ -17,7 +17,13 @@
 		"type": "git",
 		"url": "git+https://github.com/christianalfoni/proxy-state-tree.git"
 	},
-	"keywords": [ "state", "proxy", "mobx", "vue", "store" ],
+	"keywords": [
+		"state",
+		"proxy",
+		"mobx",
+		"vue",
+		"store"
+	],
 	"author": "Christian Alfoni",
 	"license": "MIT",
 	"bugs": {
