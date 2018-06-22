@@ -13,6 +13,25 @@ class ProxyStateTree {
   get() {
     return this.proxy;
   }
+  flush() {
+    const pathCallbacksCalled = [];
+
+    for (let mutation in this.mutations) {
+      const path = this.mutations[mutation].path;
+
+      if (this.pathDependencies[path]) {
+        for (let pathCallback in this.pathDependencies[path]) {
+          const callback = this.pathDependencies[path][pathCallback];
+
+          if (pathCallbacksCalled.indexOf(callback) === -1) {
+            pathCallbacksCalled.push(callback);
+            callback();
+          }
+        }
+      }
+    }
+    pathCallbacksCalled.length = 0;
+  }
   startMutationTracking() {
     const currentMutations = this.mutations.slice();
 
@@ -22,17 +41,6 @@ class ProxyStateTree {
     return currentMutations;
   }
   stopMutationTracking() {
-    for (let callback in this.mutationCallbacks) {
-      this.mutationCallbacks[callback](this.mutations);
-    }
-    for (let mutation in this.mutations) {
-      const path = this.mutations[mutation].path;
-      if (this.pathDependencies[path]) {
-        for (let pathCallback in this.pathDependencies[path]) {
-          this.pathDependencies[path][pathCallback]();
-        }
-      }
-    }
     this.isTrackingMutations = false;
 
     return this.mutations;

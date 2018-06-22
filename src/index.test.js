@@ -131,6 +131,7 @@ describe("ARRAYS", () => {
       expect(paths).toEqual(["foo", "foo.0"]);
     });
   });
+
   describe("MUTATIONS", () => {
     test("should throw when mutating without tracking", () => {
       const state = {
@@ -275,6 +276,28 @@ describe("REACTIONS", () => {
     tree.startMutationTracking();
     state.foo = "bar2";
     tree.stopMutationTracking();
+    tree.flush();
+    expect(reactionCount).toBe(1);
+  });
+  test("should only trigger ones when multiple paths mutated", () => {
+    let reactionCount = 0;
+    const tree = new ProxyStateTree({
+      foo: "bar",
+      bar: "baz"
+    });
+    const state = tree.get();
+    tree.startPathsTracking();
+    state.foo; // eslint-disable-line
+    state.bar; // eslint-disable-line
+    const paths = tree.stopPathsTracking();
+    tree.addMutationListener(paths, () => {
+      reactionCount++;
+    });
+    tree.startMutationTracking();
+    state.foo = "bar2";
+    state.bar = "baz2";
+    tree.stopMutationTracking();
+    tree.flush();
     expect(reactionCount).toBe(1);
   });
   test("should be able to update listener using paths", () => {
@@ -297,6 +320,7 @@ describe("REACTIONS", () => {
     tree.startMutationTracking();
     state.foo = "bar2";
     tree.stopMutationTracking();
+    tree.flush();
     expect(tree.pathDependencies.foo.length).toBe(1);
     expect(tree.pathDependencies.bar.length).toBe(1);
   });
@@ -320,6 +344,7 @@ describe("REACTIONS", () => {
     tree.startMutationTracking();
     state.foo = "bar2";
     tree.stopMutationTracking();
+    tree.flush();
     expect(tree.pathDependencies).toEqual({});
   });
 });
@@ -396,6 +421,7 @@ describe("ITERATIONS", () => {
       title: "mip"
     });
     tree.stopMutationTracking();
+    tree.flush();
     expect(reactionCount).toBe(1);
   });
 });

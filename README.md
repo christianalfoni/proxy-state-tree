@@ -46,10 +46,10 @@ const foo = state.foo
 const bar = state.bar
 const paths = tree.stopPathsTracking()
 
-console.log(paths) // [['foo'], ['bar']]
+console.log(paths) // ['foo', 'bar']
 ```
 
-You would typically use this mechanism to track usage of state. For example rendering a component, calculating a a computed value etc. The returned paths array is stored for later usage. The paths structure is used internally by proxy-state-tree, but you can also consume it as a library author to for example showing components and what paths they depend on in a devtool.
+You would typically use this mechanism to track usage of state. For example rendering a component, calculating a a computed value etc. The returned paths array is stored for later usage. The paths structure is used internally by proxy-state-tree, but you can also consume it as a library author to for example showing components and what paths they depend on in a devtool. Nested paths uses dot notation, for example `['foo.bar']`.
 
 ## Track mutations
 
@@ -81,7 +81,7 @@ console.log(mutations)
 */
 ```
 
-You would use **startMutationTracking** and **stopMutationTracking** around logic that is allowed to do mutations, for example actions or similar. Internally **proxy-state-tree** will notify all mutation listeners about updated state, but you can also use this structure in combination with a devtool. Show a list of mutations that occurs in your app, and what action performed the mutation even.
+You would use **startMutationTracking** and **stopMutationTracking** around logic that is allowed to do mutations, for example actions or similar. Trying to mutate without this tracking active results in an error. The returned array can be used in combination with a devtool.
 
 ## Check need to update
 
@@ -109,15 +109,19 @@ const listener = tree.addMutationListener(render(), () => {
   // we typically create the paths again due to possible
   // conditional logic, in "render" in this example
   listener.update(render()) 
-
-  // Remove listener
-  listener.dispose()
 })
 
 tree.startMutationTracking()
 state.foo = 'bar2'
 state.bar.push('baz')
 tree.stopMutationTracking()
+
+// This command flushes out the current mutations and
+// notifies any listeners
+tree.flush()
+
+// Remove listener
+listener.dispose()
 ```
 
 Here we combine the tracked paths with the mutations performed to see if this components, computed or whatever indeed needs to run again, doing a new **startPathsTracking** and **stopPathsTracking**.
