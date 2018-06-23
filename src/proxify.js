@@ -18,7 +18,8 @@ const arrayMutations = new Set([
   "unshift",
   "splice",
   "reverse",
-  "sort"
+  "sort",
+  "copyWithin"
 ]);
 
 function createArrayProxy(tree, value, path) {
