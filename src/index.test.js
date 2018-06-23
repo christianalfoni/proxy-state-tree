@@ -50,9 +50,9 @@ describe("OBJECTS", () => {
         }
       };
       const tree = new ProxyStateTree(state);
-      tree.startPathsTracking();
+      const trackId = tree.startPathsTracking();
       expect(tree.get().foo.bar).toBe("baz");
-      const paths = tree.stopPathsTracking();
+      const paths = tree.clearPathsTracking(trackId);
       expect(paths).toEqual(["foo", "foo.bar"]);
     });
   });
@@ -73,7 +73,7 @@ describe("OBJECTS", () => {
       const tree = new ProxyStateTree(state);
       tree.startMutationTracking();
       tree.get().foo = "bar2";
-      const mutations = tree.stopMutationTracking();
+      const mutations = tree.clearMutationTracking();
       expect(mutations).toEqual([
         {
           method: "set",
@@ -90,7 +90,7 @@ describe("OBJECTS", () => {
       const tree = new ProxyStateTree(state);
       tree.startMutationTracking();
       delete tree.get().foo;
-      const mutations = tree.stopMutationTracking();
+      const mutations = tree.clearMutationTracking();
       expect(mutations).toEqual([
         {
           method: "unset",
@@ -125,10 +125,39 @@ describe("ARRAYS", () => {
         foo: ["bar"]
       };
       const tree = new ProxyStateTree(state);
-      tree.startPathsTracking();
+      const trackId = tree.startPathsTracking();
       expect(tree.get().foo[0]).toBe("bar");
-      const paths = tree.stopPathsTracking();
+      const paths = tree.clearPathsTracking(trackId);
       expect(paths).toEqual(["foo", "foo.0"]);
+    });
+    test("should allow nested tracking", () => {
+      const tree = new ProxyStateTree({
+        foo: [
+          {
+            title: "foo"
+          }
+        ]
+      });
+
+      const state = tree.get();
+      const trackIdA = tree.startPathsTracking();
+      state.foo.map(item => {
+        const trackIdB = tree.startPathsTracking();
+        item.title; // eslint-disable-line
+        const pathsB = tree.clearPathsTracking(trackIdB);
+        expect(pathsB).toEqual(["foo.0.title"]);
+      });
+      const pathsA = tree.clearPathsTracking(trackIdA);
+      expect(pathsA).toEqual(["foo", "foo.0"]);
+    });
+    test("should throw when stopping outer nested tracking before inner", () => {
+      const tree = new ProxyStateTree({});
+
+      const trackIdA = tree.startPathsTracking();
+      tree.startPathsTracking();
+      expect(() => {
+        tree.clearPathsTracking(trackIdA);
+      }).toThrow();
     });
   });
 
@@ -149,7 +178,7 @@ describe("ARRAYS", () => {
       const tree = new ProxyStateTree(state);
       tree.startMutationTracking();
       tree.get().foo.push("bar");
-      const mutations = tree.stopMutationTracking();
+      const mutations = tree.clearMutationTracking();
       expect(mutations).toEqual([
         {
           method: "push",
@@ -168,7 +197,7 @@ describe("ARRAYS", () => {
       const tree = new ProxyStateTree(state);
       tree.startMutationTracking();
       tree.get().foo.pop();
-      const mutations = tree.stopMutationTracking();
+      const mutations = tree.clearMutationTracking();
       expect(mutations).toEqual([
         {
           method: "pop",
@@ -186,7 +215,7 @@ describe("ARRAYS", () => {
       const tree = new ProxyStateTree(state);
       tree.startMutationTracking();
       tree.get().foo.shift();
-      const mutations = tree.stopMutationTracking();
+      const mutations = tree.clearMutationTracking();
       expect(mutations).toEqual([
         {
           method: "shift",
@@ -204,7 +233,7 @@ describe("ARRAYS", () => {
       const tree = new ProxyStateTree(state);
       tree.startMutationTracking();
       tree.get().foo.unshift("foo");
-      const mutations = tree.stopMutationTracking();
+      const mutations = tree.clearMutationTracking();
       expect(mutations).toEqual([
         {
           method: "unshift",
@@ -222,7 +251,7 @@ describe("ARRAYS", () => {
       const tree = new ProxyStateTree(state);
       tree.startMutationTracking();
       tree.get().foo.splice(0, 1, "bar");
-      const mutations = tree.stopMutationTracking();
+      const mutations = tree.clearMutationTracking();
       expect(mutations).toEqual([
         {
           method: "splice",
@@ -267,15 +296,15 @@ describe("REACTIONS", () => {
       foo: "bar"
     });
     const state = tree.get();
-    tree.startPathsTracking();
+    const trackId = tree.startPathsTracking();
     state.foo; // eslint-disable-line
-    const paths = tree.stopPathsTracking();
+    const paths = tree.clearPathsTracking(trackId);
     tree.addMutationListener(paths, () => {
       reactionCount++;
     });
     tree.startMutationTracking();
     state.foo = "bar2";
-    tree.stopMutationTracking();
+    tree.clearMutationTracking();
     tree.flush();
     expect(reactionCount).toBe(1);
   });
@@ -286,17 +315,17 @@ describe("REACTIONS", () => {
       bar: "baz"
     });
     const state = tree.get();
-    tree.startPathsTracking();
+    const trackId = tree.startPathsTracking();
     state.foo; // eslint-disable-line
     state.bar; // eslint-disable-line
-    const paths = tree.stopPathsTracking();
+    const paths = tree.clearPathsTracking(trackId);
     tree.addMutationListener(paths, () => {
       reactionCount++;
     });
     tree.startMutationTracking();
     state.foo = "bar2";
     state.bar = "baz2";
-    tree.stopMutationTracking();
+    tree.clearMutationTracking();
     tree.flush();
     expect(reactionCount).toBe(1);
   });
@@ -307,19 +336,19 @@ describe("REACTIONS", () => {
     });
     const state = tree.get();
     function render() {
-      tree.startPathsTracking();
+      const trackId = tree.startPathsTracking();
       if (state.foo === "bar") {
       } else {
         state.bar; // eslint-disable-line
       }
-      return tree.stopPathsTracking();
+      return tree.clearPathsTracking(trackId);
     }
     const listener = tree.addMutationListener(render(), () => {
       listener.update(render());
     });
     tree.startMutationTracking();
     state.foo = "bar2";
-    tree.stopMutationTracking();
+    tree.clearMutationTracking();
     tree.flush();
     expect(tree.pathDependencies.foo.length).toBe(1);
     expect(tree.pathDependencies.bar.length).toBe(1);
@@ -331,19 +360,19 @@ describe("REACTIONS", () => {
     });
     const state = tree.get();
     function render() {
-      tree.startPathsTracking();
+      const trackId = tree.startPathsTracking();
       if (state.foo === "bar") {
       } else {
         state.bar; // eslint-disable-line
       }
-      return tree.stopPathsTracking();
+      return tree.clearPathsTracking(trackId);
     }
     const listener = tree.addMutationListener(render(), () => {
       listener.dispose();
     });
     tree.startMutationTracking();
     state.foo = "bar2";
-    tree.stopMutationTracking();
+    tree.clearMutationTracking();
     tree.flush();
     expect(tree.pathDependencies).toEqual({});
   });
@@ -362,11 +391,11 @@ describe("ITERATIONS", () => {
       ]
     });
     const state = tree.get();
-    tree.startPathsTracking();
+    const trackId = tree.startPathsTracking();
     state.items.forEach(item => {
       item.title; // eslint-disable-line 
     });
-    const paths = tree.stopPathsTracking();
+    const paths = tree.clearPathsTracking(trackId);
     expect(paths).toEqual([
       "items",
       "items.0",
@@ -383,11 +412,11 @@ describe("ITERATIONS", () => {
       }
     });
     const state = tree.get();
-    tree.startPathsTracking();
+    const trackId = tree.startPathsTracking();
     Object.keys(state.items).forEach(key => {
       state.items[key]; // eslint-disable-line
     });
-    const paths = tree.stopPathsTracking();
+    const paths = tree.clearPathsTracking(trackId);
     expect(paths).toEqual(["items", "items.foo", "items.bar"]);
   });
   test("should react to array mutation methods", () => {
@@ -403,9 +432,9 @@ describe("ITERATIONS", () => {
       ]
     });
     const state = tree.get();
-    tree.startPathsTracking();
+    const trackId = tree.startPathsTracking();
     state.items.map(item => item.title);
-    const paths = tree.stopPathsTracking();
+    const paths = tree.clearPathsTracking(trackId);
     expect(paths).toEqual([
       "items",
       "items.0",
@@ -420,7 +449,7 @@ describe("ITERATIONS", () => {
     state.items.push({
       title: "mip"
     });
-    tree.stopMutationTracking();
+    tree.clearMutationTracking();
     tree.flush();
     expect(reactionCount).toBe(1);
   });

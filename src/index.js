@@ -1,13 +1,12 @@
-import proxify, { IS_PROXY } from "./proxify";
+import proxify, { IS_PROXY, STATUS } from "./proxify";
 
 class ProxyStateTree {
   constructor(state) {
     this.state = state;
     this.pathDependencies = {};
     this.mutations = [];
-    this.paths = new Set();
-    this.isTrackingPaths = false;
-    this.isTrackingMutations = false;
+    this.paths = [];
+    this.status = STATUS.IDLE;
     this.proxy = proxify(this, state);
   }
   get() {
@@ -33,27 +32,52 @@ class ProxyStateTree {
     pathCallbacksCalled.length = 0;
   }
   startMutationTracking() {
+    if (this.status !== STATUS.IDLE) {
+      throw new Error(
+        `You can not start tracking mutations unless idle. The status is: ${
+          this.status
+        }`
+      );
+    }
+
     const currentMutations = this.mutations.slice();
 
-    this.isTrackingMutations = true;
+    this.status = STATUS.TRACKING_MUTATIONS;
     this.mutations.length = 0;
 
     return currentMutations;
   }
-  stopMutationTracking() {
-    this.isTrackingMutations = false;
+  clearMutationTracking() {
+    this.status = STATUS.IDLE;
 
     return this.mutations;
   }
   startPathsTracking() {
-    this.isTrackingPaths = true;
-    const currentPaths = Array.from(this.paths);
-    this.paths.clear();
-    return currentPaths;
+    if (this.status === STATUS.TRACKING_MUTATIONS) {
+      throw new Error(
+        `You can not start tracking paths when tracking mutations.`
+      );
+    }
+
+    this.status = STATUS.TRACKING_PATHS;
+
+    return this.paths.push(new Set()) - 1;
   }
-  stopPathsTracking() {
-    this.isTrackingPaths = false;
-    return Array.from(this.paths);
+  clearPathsTracking(index) {
+    if (index !== this.paths.length - 1) {
+      throw new Error(
+        "Nested path tracking requires you to stop the nested path tracker before the outer"
+      );
+    }
+    const pathSet = this.paths[index];
+    const paths = Array.from(pathSet);
+    this.paths.pop();
+
+    if (!this.paths.length) {
+      this.status = STATUS.IDLE;
+    }
+
+    return paths;
   }
   addMutationListener(initialPaths, cb) {
     const pathDependencies = this.pathDependencies;

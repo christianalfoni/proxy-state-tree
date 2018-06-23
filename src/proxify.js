@@ -1,6 +1,11 @@
 import isPlainObject from "is-plain-object";
 
-const IS_PROXY = Symbol("IS_PROXY");
+export const IS_PROXY = Symbol("IS_PROXY");
+export const STATUS = {
+  IDLE: "IDLE",
+  TRACKING_PATHS: "TRACKING_PATHS",
+  TRACKING_MUTATIONS: "TRACKING_MUTATIONS"
+};
 
 function concat(path, prop) {
   return path === undefined ? prop : path + "." + prop;
@@ -30,12 +35,12 @@ function createArrayProxy(tree, value, path) {
 
       const nestedPath = concat(path, prop);
 
-      if (tree.isTrackingPaths) {
-        tree.paths.add(nestedPath);
+      if (tree.status === STATUS.TRACKING_PATHS) {
+        tree.paths[tree.paths.length - 1].add(nestedPath);
       }
 
       if (arrayMutations.has(prop)) {
-        if (!tree.isTrackingMutations) {
+        if (tree.status !== STATUS.TRACKING_MUTATIONS) {
           throw new Error(
             `proxy-state-tree - You are mutating the path "${nestedPath}", but it is not allowed`
           );
@@ -64,8 +69,8 @@ function createObjectProxy(tree, value, path) {
       const value = target[prop];
       const nestedPath = concat(path, prop);
 
-      if (tree.isTrackingPaths) {
-        tree.paths.add(nestedPath);
+      if (tree.status === STATUS.TRACKING_PATHS) {
+        tree.paths[tree.paths.length - 1].add(nestedPath);
       }
 
       if (typeof value === "function") {
@@ -77,11 +82,12 @@ function createObjectProxy(tree, value, path) {
     set(target, prop, value) {
       const nestedPath = concat(path, prop);
 
-      if (!tree.isTrackingMutations) {
+      if (tree.status !== STATUS.TRACKING_MUTATIONS) {
         throw new Error(
           `proxy-state-tree - You are mutating the path "${nestedPath}", but it is not allowed`
         );
       }
+
       tree.mutations.push({
         method: "set",
         path: nestedPath,
@@ -92,6 +98,12 @@ function createObjectProxy(tree, value, path) {
     },
     deleteProperty(target, prop) {
       const nestedPath = concat(path, prop);
+
+      if (tree.status !== STATUS.TRACKING_MUTATIONS) {
+        throw new Error(
+          `proxy-state-tree - You are mutating the path "${nestedPath}", but it is not allowed`
+        );
+      }
 
       tree.mutations.push({
         method: "unset",
@@ -119,5 +131,4 @@ function proxify(tree, value, path) {
   return value;
 }
 
-export { IS_PROXY };
 export default proxify;
