@@ -30,7 +30,7 @@ As a library author you would typically expose a mechanism to define the initial
 
 ## Track access
 
-You can track access to the state by using the **startPathsTracking** and **stopPathsTracking** methods.
+You can track access to the state by using the **startPathsTracking** and **clearPathsTracking** methods.
 
 ```js
 import ProxyStateTree from 'proxy-state-tree'
@@ -41,15 +41,15 @@ const tree = new ProxyStateTree({
 })
 const state = tree.get()
 
-tree.startPathsTracking()
+const trackId = tree.startPathsTracking()
 const foo = state.foo
 const bar = state.bar
-const paths = tree.stopPathsTracking()
+const paths = tree.clearPathsTracking(trackId)
 
 console.log(paths) // ['foo', 'bar']
 ```
 
-You would typically use this mechanism to track usage of state. For example rendering a component, calculating a a computed value etc. The returned paths array is stored for later usage. The paths structure is used internally by proxy-state-tree, but you can also consume it as a library author to for example showing components and what paths they depend on in a devtool. Nested paths uses dot notation, for example `['foo.bar']`.
+You would typically use this mechanism to track usage of state. For example rendering a component, calculating a a computed value etc. The returned paths array is stored for later usage. The paths structure is used internally by proxy-state-tree, but you can also consume it as a library author to for example showing components and what paths they depend on in a devtool. Nested paths uses dot notation, for example `['foo.bar']`. Path tracking can be nested, but they can not run at the same time. Meaning the nested tracking must finish before the outer tracker.
 
 ## Track mutations
 
@@ -65,7 +65,7 @@ const state = tree.get()
 tree.startMutationTracking()
 state.foo = 'bar2'
 state.bar.push('baz')
-const mutations = tree.stopMutationTracking()
+const mutations = tree.clearMutationTracking()
 
 console.log(mutations)
 /*
@@ -81,7 +81,7 @@ console.log(mutations)
 */
 ```
 
-You would use **startMutationTracking** and **stopMutationTracking** around logic that is allowed to do mutations, for example actions or similar. Trying to mutate without this tracking active results in an error. The returned array can be used in combination with a devtool.
+You would use **startMutationTracking** and **clearMutationTracking** around logic that is allowed to do mutations, for example actions or similar. Trying to mutate without this tracking active results in an error. The returned array can be used in combination with a devtool.
 
 ## Check need to update
 
@@ -95,11 +95,11 @@ const tree = new ProxyStateTree({
 const state = tree.get()
 
 function render () {
-  tree.startPathsTracking()
+  const trackId = tree.startPathsTracking()
   const foo = state.foo
   const bar = state.bar
 
-  return tree.stopPathsTracking()
+  return tree.clearPathsTracking(trackId)
 }
 
 const listener = tree.addMutationListener(render(), () => {
@@ -114,7 +114,7 @@ const listener = tree.addMutationListener(render(), () => {
 tree.startMutationTracking()
 state.foo = 'bar2'
 state.bar.push('baz')
-tree.stopMutationTracking()
+tree.clearMutationTracking()
 
 // This command flushes out the current mutations and
 // notifies any listeners
@@ -124,7 +124,7 @@ tree.flush()
 listener.dispose()
 ```
 
-Here we combine the tracked paths with the mutations performed to see if this components, computed or whatever indeed needs to run again, doing a new **startPathsTracking** and **stopPathsTracking**.
+Here we combine the tracked paths with the mutations performed to see if this components, computed or whatever indeed needs to run again, doing a new **startPathsTracking** and **clearPathsTracking**.
 
 ## Dynamic state values
 

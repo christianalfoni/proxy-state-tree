@@ -1,6 +1,6 @@
 {
 	"name": "proxy-state-tree",
-	"version": "1.0.0-alpha7",
+	"version": "1.0.0-alpha8",
 	"description": "An implementation of the Mobx/Vue state tracking approach, for library authors",
 	"main": "dist/proxy-state-tree.cjs.js",
 	"jsnext:main": "dist/proxy-state-tree.es.js",
