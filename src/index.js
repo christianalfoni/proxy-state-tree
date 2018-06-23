@@ -1,4 +1,4 @@
-import proxify, { IS_PROXY } from "./proxify";
+import proxify, { IS_PROXY, STATUS } from "./proxify";
 
 class ProxyStateTree {
   constructor(state) {
@@ -6,8 +6,7 @@ class ProxyStateTree {
     this.pathDependencies = {};
     this.mutations = [];
     this.paths = [];
-    this.isTrackingPaths = false;
-    this.isTrackingMutations = false;
+    this.status = STATUS.IDLE;
     this.proxy = proxify(this, state);
   }
   get() {
@@ -32,21 +31,35 @@ class ProxyStateTree {
     }
     pathCallbacksCalled.length = 0;
   }
-  setMutationTracking() {
+  startMutationTracking() {
+    if (this.status !== STATUS.IDLE) {
+      throw new Error(
+        `You can not start tracking mutations unless idle. The status is: ${
+          this.status
+        }`
+      );
+    }
+
     const currentMutations = this.mutations.slice();
 
-    this.isTrackingMutations = true;
+    this.status = STATUS.TRACKING_MUTATIONS;
     this.mutations.length = 0;
 
     return currentMutations;
   }
   clearMutationTracking() {
-    this.isTrackingMutations = false;
+    this.status = STATUS.IDLE;
 
     return this.mutations;
   }
-  setPathsTracking() {
-    this.isTrackingPaths = true;
+  startPathsTracking() {
+    if (this.status === STATUS.TRACKING_MUTATIONS) {
+      throw new Error(
+        `You can not start tracking paths when tracking mutations.`
+      );
+    }
+
+    this.status = STATUS.TRACKING_PATHS;
 
     return this.paths.push(new Set()) - 1;
   }
@@ -61,7 +74,7 @@ class ProxyStateTree {
     this.paths.pop();
 
     if (!this.paths.length) {
-      this.isTrackingPaths = false;
+      this.status = STATUS.IDLE;
     }
 
     return paths;
