@@ -10,9 +10,11 @@ The **proxy-state-tree** project is created to stimulate innovation in state man
 
 **proxy-state-tree** is a low level implementation of the **getter/setter interception** with a **single state tree** to help library authors innovate. I hope to see innovations that removes the burden that immutability currently causes, but keeps the guarantees that was introduced in **Flux**. I invite you to make a mobx and redux baby! ;-)
 
-## Example
+## Examples
 
-You can look at an example of how you could build a state-tree implementation for [vuejs](https://vuejs.org/) on this [codesandbox](https://codesandbox.io/s/5vy5jxrpop). It is a simple implementation that allows you to define a state tree and expose actions to the components. There are many ways to do this, so this is just one example of how proxy-state-tree integrates with existing solutions. You might also imagine additional features here for computing state in the tree, creating reactions in the components etc.
+- [Vue](https://codesandbox.io/s/5vy5jxrpop) example with a simple implementation that allows you to define a state tree and expose a store to the components which can be mutated in the methods
+
+- [Preact](https://codesandbox.io/s/lpmv68r8y9) example with a simple implementation of a external state and actions passed on a Provider. Also includes a simple, but inspiring debugger
 
 ## Create a tree
 

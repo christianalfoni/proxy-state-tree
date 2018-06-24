@@ -50,7 +50,7 @@ class ProxyStateTree {
   clearMutationTracking() {
     this.status = STATUS.IDLE;
 
-    return this.mutations;
+    return this.mutations.slice();
   }
   startPathsTracking() {
     if (this.status === STATUS.TRACKING_MUTATIONS) {
