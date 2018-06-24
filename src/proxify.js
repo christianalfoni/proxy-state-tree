@@ -95,7 +95,7 @@ function createObjectProxy(tree, value, path) {
         args: [value]
       });
 
-      return (target[prop] = value);
+      return Reflect.set(target, prop, value);
     },
     deleteProperty(target, prop) {
       const nestedPath = concat(path, prop);
