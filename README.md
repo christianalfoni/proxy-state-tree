@@ -46,7 +46,7 @@ const foo = state.foo
 const bar = state.bar
 const paths = tree.clearPathsTracking(trackId)
 
-console.log(paths) // ['foo', 'bar']
+console.log(paths) // Set { 'foo', 'bar' }
 ```
 
 You would typically use this mechanism to track usage of state. For example rendering a component, calculating a a computed value etc. The returned paths array is stored for later usage. The paths structure is used internally by proxy-state-tree, but you can also consume it as a library author to for example showing components and what paths they depend on in a devtool. Nested paths uses dot notation, for example `['foo.bar']`. Path tracking can be nested, but they can not run at the same time. Meaning the nested tracking must finish before the outer tracker.
