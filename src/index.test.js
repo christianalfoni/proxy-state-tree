@@ -53,7 +53,7 @@ describe("OBJECTS", () => {
       const trackId = tree.startPathsTracking();
       expect(tree.get().foo.bar).toBe("baz");
       const paths = tree.clearPathsTracking(trackId);
-      expect(paths).toEqual(["foo", "foo.bar"]);
+      expect(paths).toEqual(new Set(["foo", "foo.bar"]));
     });
   });
   describe("MUTATIONS", () => {
@@ -128,7 +128,7 @@ describe("ARRAYS", () => {
       const trackId = tree.startPathsTracking();
       expect(tree.get().foo[0]).toBe("bar");
       const paths = tree.clearPathsTracking(trackId);
-      expect(paths).toEqual(["foo", "foo.0"]);
+      expect(paths).toEqual(new Set(["foo", "foo.0"]));
     });
     test("should allow nested tracking", () => {
       const tree = new ProxyStateTree({
@@ -145,10 +145,10 @@ describe("ARRAYS", () => {
         const trackIdB = tree.startPathsTracking();
         item.title; // eslint-disable-line
         const pathsB = tree.clearPathsTracking(trackIdB);
-        expect(pathsB).toEqual(["foo.0.title"]);
+        expect(pathsB).toEqual(new Set(["foo.0.title"]));
       });
       const pathsA = tree.clearPathsTracking(trackIdA);
-      expect(pathsA).toEqual(["foo", "foo.0"]);
+      expect(pathsA).toEqual(new Set(["foo", "foo.0"]));
     });
     test("should throw when stopping outer nested tracking before inner", () => {
       const tree = new ProxyStateTree({});
@@ -350,8 +350,8 @@ describe("REACTIONS", () => {
     state.foo = "bar2";
     tree.clearMutationTracking();
     tree.flush();
-    expect(tree.pathDependencies.foo.length).toBe(1);
-    expect(tree.pathDependencies.bar.length).toBe(1);
+    expect(tree.pathDependencies.foo.size).toBe(1);
+    expect(tree.pathDependencies.bar.size).toBe(1);
   });
   test("should be able to remove listener", () => {
     const tree = new ProxyStateTree({
@@ -396,13 +396,10 @@ describe("ITERATIONS", () => {
       item.title; // eslint-disable-line 
     });
     const paths = tree.clearPathsTracking(trackId);
-    expect(paths).toEqual([
-      "items",
-      "items.0",
-      "items.0.title",
-      "items.1",
-      "items.1.title"
-    ]);
+
+    expect(paths).toEqual(
+      new Set(["items", "items.0", "items.0.title", "items.1", "items.1.title"])
+    );
   });
   test("should track paths when using Object.keys", () => {
     const tree = new ProxyStateTree({
@@ -417,7 +414,7 @@ describe("ITERATIONS", () => {
       state.items[key]; // eslint-disable-line
     });
     const paths = tree.clearPathsTracking(trackId);
-    expect(paths).toEqual(["items", "items.foo", "items.bar"]);
+    expect(paths).toEqual(new Set(["items", "items.foo", "items.bar"]));
   });
   test("should react to array mutation methods", () => {
     let reactionCount = 0;
@@ -435,13 +432,9 @@ describe("ITERATIONS", () => {
     const trackId = tree.startPathsTracking();
     state.items.map(item => item.title);
     const paths = tree.clearPathsTracking(trackId);
-    expect(paths).toEqual([
-      "items",
-      "items.0",
-      "items.0.title",
-      "items.1",
-      "items.1.title"
-    ]);
+    expect(paths).toEqual(
+      new Set(["items", "items.0", "items.0.title", "items.1", "items.1.title"])
+    );
     tree.addMutationListener(paths, () => {
       reactionCount++;
     });

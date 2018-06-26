@@ -13,23 +13,21 @@ class ProxyStateTree {
     return this.proxy;
   }
   flush() {
-    const pathCallbacksCalled = [];
+    const pathCallbacksCalled = new Set();
 
     for (let mutation in this.mutations) {
       const path = this.mutations[mutation].path;
 
       if (this.pathDependencies[path]) {
-        for (let pathCallback in this.pathDependencies[path]) {
-          const callback = this.pathDependencies[path][pathCallback];
-
-          if (pathCallbacksCalled.indexOf(callback) === -1) {
-            pathCallbacksCalled.push(callback);
+        for (let callback of this.pathDependencies[path]) {
+          if (!pathCallbacksCalled.has(callback)) {
+            pathCallbacksCalled.add(callback);
             callback();
           }
         }
       }
     }
-    pathCallbacksCalled.length = 0;
+    pathCallbacksCalled.clear();
   }
   startMutationTracking() {
     if (this.status !== STATUS.IDLE) {
@@ -70,63 +68,47 @@ class ProxyStateTree {
       );
     }
     const pathSet = this.paths[index];
-    const paths = Array.from(pathSet);
     this.paths.pop();
 
     if (!this.paths.length) {
       this.status = STATUS.IDLE;
     }
 
-    return paths;
+    return pathSet;
   }
   addMutationListener(initialPaths, cb) {
     const pathDependencies = this.pathDependencies;
     let currentStringPaths = initialPaths;
 
-    for (let index in currentStringPaths) {
-      const currentStringPath = currentStringPaths[index];
+    for (let currentStringPath of currentStringPaths) {
       pathDependencies[currentStringPath] = pathDependencies[currentStringPath]
-        ? pathDependencies[currentStringPath].concat(cb)
-        : [cb];
+        ? pathDependencies[currentStringPath].add(cb)
+        : new Set([cb]);
     }
 
     return {
-      update(newPaths) {
-        const newStringPaths = newPaths;
-
-        for (let index in currentStringPaths) {
-          const currentStringPath = currentStringPaths[index];
-
-          if (newStringPaths.indexOf(currentStringPath) === -1) {
-            pathDependencies[currentStringPath].splice(
-              pathDependencies[currentStringPath].indexOf(cb),
-              1
-            );
+      update(newStringPaths) {
+        for (let currentStringPath of currentStringPaths) {
+          if (!newStringPaths.has(currentStringPath)) {
+            pathDependencies[currentStringPath].delete(cb);
           }
         }
 
-        for (let index in newStringPaths) {
-          const newStringPath = newStringPaths[index];
-
-          if (currentStringPaths.indexOf(newStringPath) === -1) {
+        for (let newStringPath of newStringPaths) {
+          if (!currentStringPaths.has(newStringPath)) {
             pathDependencies[newStringPath] = pathDependencies[newStringPath]
-              ? pathDependencies[newStringPath].concat(cb)
-              : [cb];
+              ? pathDependencies[newStringPath].add(cb)
+              : new Set([cb]);
           }
         }
 
         currentStringPaths = newStringPaths;
       },
       dispose() {
-        for (let index in currentStringPaths) {
-          const currentStringPath = currentStringPaths[index];
+        for (let currentStringPath of currentStringPaths) {
+          pathDependencies[currentStringPath].delete(cb);
 
-          pathDependencies[currentStringPath].splice(
-            pathDependencies[currentStringPath].indexOf(cb),
-            1
-          );
-
-          if (!pathDependencies[currentStringPath].length) {
+          if (pathDependencies[currentStringPath].size === 0) {
             delete pathDependencies[currentStringPath];
           }
         }
