@@ -447,3 +447,62 @@ describe("ITERATIONS", () => {
     expect(reactionCount).toBe(1);
   });
 });
+
+describe("PRODUCTION", () => {
+  it("should not track anything that isn't observed", () => {
+    const tree = new ProxyStateTree(
+      {
+        foo: {
+          bar: true
+        }
+      },
+      {
+        devmode: false
+      }
+    );
+    tree.startMutationTracking();
+    tree.get().foo; // eslint-disable-line
+    tree.get().foo.bar; // eslint-disable-line
+    const mutations = tree.clearMutationTracking();
+
+    expect(mutations).toEqual([]);
+  });
+
+  it("should track mutations for observed paths", () => {
+    const tree = new ProxyStateTree(
+      {
+        items: [
+          {
+            title: "foo"
+          },
+          {
+            title: "bar"
+          }
+        ]
+      },
+      {
+        devmode: false
+      }
+    );
+
+    tree.addMutationListener(new Set(["items.0.title"]), () => {});
+
+    tree.startMutationTracking();
+    tree.get().items[0].title = "foo1";
+    delete tree.get().items[0].title;
+    tree.get().items[1].title = "bar2"; // this mutation should not be tracked
+    const mutations = tree.clearMutationTracking();
+    expect(mutations).toEqual([
+      {
+        method: "set",
+        path: "items.0.title",
+        args: ["foo1"]
+      },
+      {
+        method: "unset",
+        path: "items.0.title",
+        args: []
+      }
+    ]);
+  });
+});

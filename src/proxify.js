@@ -11,6 +11,10 @@ function concat(path, prop) {
   return path === undefined ? prop : path + "." + prop;
 }
 
+function shouldTrackMutations(tree, path) {
+  return tree.options.devmode || (path && tree.pathDependencies[path]);
+}
+
 const arrayMutations = new Set([
   "push",
   "shift",
@@ -40,7 +44,7 @@ function createArrayProxy(tree, value, path) {
         tree.paths[tree.paths.length - 1].add(nestedPath);
       }
 
-      if (arrayMutations.has(prop)) {
+      if (arrayMutations.has(prop) && shouldTrackMutations(tree, nestedPath)) {
         if (tree.status !== STATUS.TRACKING_MUTATIONS) {
           throw new Error(
             `proxy-state-tree - You are mutating the path "${nestedPath}", but it is not allowed`
@@ -88,12 +92,13 @@ function createObjectProxy(tree, value, path) {
           `proxy-state-tree - You are mutating the path "${nestedPath}", but it is not allowed`
         );
       }
-
-      tree.mutations.push({
-        method: "set",
-        path: nestedPath,
-        args: [value]
-      });
+      if (shouldTrackMutations(tree, nestedPath)) {
+        tree.mutations.push({
+          method: "set",
+          path: nestedPath,
+          args: [value]
+        });
+      }
 
       return Reflect.set(target, prop, value);
     },
@@ -105,12 +110,13 @@ function createObjectProxy(tree, value, path) {
           `proxy-state-tree - You are mutating the path "${nestedPath}", but it is not allowed`
         );
       }
-
-      tree.mutations.push({
-        method: "unset",
-        path: nestedPath,
-        args: []
-      });
+      if (shouldTrackMutations(tree, nestedPath)) {
+        tree.mutations.push({
+          method: "unset",
+          path: nestedPath,
+          args: []
+        });
+      }
 
       delete target[prop];
 
