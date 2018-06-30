@@ -58,6 +58,21 @@ function createArrayProxy(tree, value, path) {
       }
 
       return (target[prop] = proxify(tree, target[prop], nestedPath));
+    },
+    set(target, prop, value) {
+      const nestedPath = concat(path, prop);
+      if (tree.status !== STATUS.TRACKING_MUTATIONS) {
+        throw new Error(
+          `proxy-state-tree - You are mutating the path "${nestedPath}", but it is not allowed`
+        );
+      }
+  
+      tree.mutations.push({
+        method: "set",
+        path: nestedPath,
+        args: [value]
+      });
+      return Reflect.set(target, prop, value);
     }
   });
 }
