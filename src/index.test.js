@@ -446,4 +446,54 @@ describe("ITERATIONS", () => {
     tree.flush();
     expect(reactionCount).toBe(1);
   });
+  test("should react to object array item value mutation", () => {
+    let reactionCount = 0;
+    const tree = new ProxyStateTree({
+      items: [
+        {
+          title: "foo"
+        },
+        {
+          title: "bar"
+        }
+      ]
+    });
+    const state = tree.get();
+    const trackId = tree.startPathsTracking();
+    state.items.map(item => item.title);
+    const paths = tree.clearPathsTracking(trackId);
+    expect(paths).toEqual(
+      new Set(["items", "items.0", "items.0.title", "items.1", "items.1.title"])
+    );
+    tree.addMutationListener(paths, () => {
+      reactionCount++;
+    });
+    tree.startMutationTracking();
+    state.items[0].title = "baz";
+    tree.clearMutationTracking();
+    tree.flush();
+    expect(reactionCount).toBe(1);
+  });
+  test("should react to int array item mutation", () => {
+    let reactionCount = 0;
+    const tree = new ProxyStateTree({
+      items: [1,2]
+    });
+    const state = tree.get();
+    const trackId = tree.startPathsTracking();
+    state.items.map(item => item);
+    const paths = tree.clearPathsTracking(trackId);
+    expect(paths).toEqual(
+      new Set(["items", "items.0","items.1"])
+    );
+    tree.addMutationListener(paths, () => {
+      reactionCount++;
+    });
+    tree.startMutationTracking();
+    state.items[0] = 99;
+    tree.clearMutationTracking();
+    tree.flush();
+    expect(reactionCount).toBe(1);
+  });
+  
 });
