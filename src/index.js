@@ -1,8 +1,9 @@
 import proxify, { IS_PROXY, STATUS } from "./proxify";
 
 class ProxyStateTree {
-  constructor(state) {
+  constructor(state, options = { devmode: true }) {
     this.state = state;
+    this.options = options;
     this.pathDependencies = {};
     this.mutations = [];
     this.paths = [];
