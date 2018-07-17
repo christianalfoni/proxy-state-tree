@@ -1,6 +1,10 @@
 # proxy-state-tree
 An implementation of the Mobx/Vue state tracking approach, for library authors 
 
+## DEPRECATED
+
+Has moved to repo: https://github.com/cerebral/overmind
+
 `npm install proxy-state-tree@beta`
 
 ## Why
